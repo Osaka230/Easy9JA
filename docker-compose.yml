@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-easy9ja}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-easy9ja}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TWITTER_API_KEY: ${TWITTER_API_KEY}
+      TWITTER_API_SECRET: ${TWITTER_API_SECRET}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET}
+    ports:
+      - '5000:5000'
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data: 
